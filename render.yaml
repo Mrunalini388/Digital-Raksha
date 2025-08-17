@@ -2,15 +2,7 @@ services:
   - type: web
     name: digital-raksha-backend
     env: python
-    plan: free
-    pythonVersion: "3.10.13"
-    region: oregon
-    buildCommand: |
-      pip install --upgrade pip
-      pip install -r requirements.txt
-      python train_nlp_model.py
+    buildCommand: pip install -r requirements.txt
     startCommand: python server.py
-    envVars:
-      - key: FLASK_ENV
-        value: production
+    plan: free
 
