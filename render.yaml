@@ -1,8 +1,11 @@
 services:
   - type: web
-    name: digital-raksha-backend
+    name: digital-raksha
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python server.py
     plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.0
 
