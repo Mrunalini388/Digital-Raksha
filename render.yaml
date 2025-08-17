@@ -5,10 +5,12 @@ services:
     plan: free
     pythonVersion: "3.10.13"
     region: oregon
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python train_nlp_model.py
     startCommand: python server.py
     envVars:
       - key: FLASK_ENV
         value: production
-      - key: PORT
-        value: 10000
+
