@@ -2,8 +2,11 @@ services:
   - type: web
     name: digital-raksha
     env: python
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    pythonVersion: 3.11.8  # specify compatible Python
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python train_nlp_model.py
     startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 2 --threads 2
     plan: free
+
+
 
 
