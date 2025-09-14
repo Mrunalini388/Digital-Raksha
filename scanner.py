@@ -1,79 +1,38 @@
 # scanner.py
-import time
-from utils import scan_url
-from detector import analyze_url
-from nlp_helper import nlp_clf, url_text_repr, fetch_page
+from nlp_helper import nlp_clf, fetch_page
+from utils import scan_url as simple_scan
 
-def scan_url_full(url: str):
-    t0 = time.time()
-    findings = []
+def scan_url_full(url):
+    """
+    Scan a URL using NLP model if available; otherwise fall back to simple heuristics.
+    Returns: { safe: bool, decision: str, message: str }
+    """
+    # Fallback to heuristics when model is missing
+    if nlp_clf is None:
+        basic = simple_scan(url)
+        return {
+            "safe": basic.get("threat") == "safe",
+            "decision": basic.get("threat"),
+            "message": basic.get("message", "Scanned with heuristics.")
+        }
 
-    # Detector rules
-    try:
-        detector_result = analyze_url(url)
-        for threat in detector_result.get("threats", []):
-            findings.append({
-                "source": "detector",
-                "label": threat.replace(" ", "-").lower(),
-                "score": 0.7,
-                "evidence": {}
-            })
-    except Exception:
-        pass
-
-    # Keyword heuristics
-    try:
-        util_result = scan_url(url)
-        if util_result["threat"] != "safe":
-            findings.append({
-                "source": "utils",
-                "label": util_result["threat"],
-                "score": 0.6,
-                "evidence": {}
-            })
-    except Exception:
-        pass
-
-    # NLP
-    phishing_score = 0.0
-    phishing_label = "unknown"
     try:
         html = fetch_page(url)
-        if nlp_clf:
-            doc = url_text_repr(url, html)
-            proba = nlp_clf.predict_proba([doc])[0]
-            phishing_score = float(proba[1])
-            pred = nlp_clf.predict([doc])[0]
-            phishing_label = "phishing" if int(pred) == 1 else "safe"
-            if int(pred) == 1:
-                findings.append({
-                    "source": "nlp",
-                    "label": "phishing",
-                    "score": phishing_score,
-                    "evidence": {}
-                })
-        else:
-            phishing_label = "model_not_loaded"
-    except Exception:
-        phishing_label = "error"
+        text_input = html if html else url
+        pred = int(nlp_clf.predict([text_input])[0])
+        is_safe = (pred == 0)
+        decision = "safe" if is_safe else "malicious"
+        return {
+            "safe": is_safe,
+            "decision": decision,
+            "message": "URL scanned successfully using NLP."
+        }
+    except Exception as e:
+        print(f"NLP scan error for {url}: {e}")
+        basic = simple_scan(url)
+        return {
+            "safe": basic.get("threat") == "safe",
+            "decision": basic.get("threat"),
+            "message": f"NLP failed, heuristics used: {basic.get('message', 'unknown')}"
+        }
 
-    risk = max((f["score"] for f in findings), default=0.0)
-    if risk >= 0.8:
-        decision = "block"
-    elif risk >= 0.5:
-        decision = "warn"
-    else:
-        decision = "allow"
-
-    safe = decision == "allow"
-    elapsed_ms = int((time.time() - t0) * 1000)
-
-    return {
-        "url": url,
-        "safe": safe,
-        "decision": decision,
-        "risk": round(risk, 2),
-        "findings": findings,
-        "nlp": {"label": phishing_label, "phishing_score": round(phishing_score, 4)},
-        "perf_ms": elapsed_ms
-    }

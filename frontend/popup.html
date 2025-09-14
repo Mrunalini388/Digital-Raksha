@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Digital Raksha - URL Scanner</title>
+  <meta charset="utf-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      width: 380px;
+      min-height: 500px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+    
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      color: #2c3e50;
+      margin-bottom: 5px;
+    }
+    
+    .header p {
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+    
+    .content {
+      padding: 20px;
+      background: white;
+    }
+    
+    .scan-button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+    }
+    
+    .scan-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    
+    .scan-button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .result-container {
+      display: none;
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .threat-level {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    .threat-level.safe {
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      color: white;
+    }
+    
+    .threat-level.low {
+      background: linear-gradient(45deg, #FFC107, #FF8F00);
+      color: white;
+    }
+    
+    .threat-level.medium {
+      background: linear-gradient(45deg, #FF9800, #F57C00);
+      color: white;
+    }
+    
+    .threat-level.high {
+      background: linear-gradient(45deg, #FF5722, #D32F2F);
+      color: white;
+    }
+    
+    .threat-level.critical {
+      background: linear-gradient(45deg, #F44336, #C62828);
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .details {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .detail-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    
+    .detail-label {
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    .detail-value {
+      color: #6c757d;
+    }
+    
+    .confidence-bar {
+      width: 100%;
+      height: 8px;
+      background: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #FFC107, #FF5722);
+      transition: width 0.5s ease;
+    }
+    
+    .threats-list {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .threats-list h4 {
+      color: #856404;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    
+    .threat-item {
+      background: white;
+      padding: 8px 12px;
+      margin: 5px 0;
+      border-radius: 5px;
+      border-left: 4px solid #ffc107;
+      font-size: 13px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .action-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .action-btn.primary {
+      background: #007bff;
+      color: white;
+    }
+    
+    .action-btn.secondary {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #6c757d;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #007bff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #f5c6cb;
+      text-align: center;
+    }
+    
+    .footer {
+      background: #f8f9fa;
+      padding: 15px;
+      text-align: center;
+      border-top: 1px solid #e9ecef;
+      font-size: 12px;
+      color: #6c757d;
+    }
+    
+    .footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🛡️ Digital Raksha</h1>
+    <p>Advanced URL Security Scanner</p>
+  </div>
+  
+  <div class="content">
+    <button id="scanBtn" class="scan-button">
+      🔍 Scan Current Tab
+    </button>
+    
+    <div id="loading" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <p>Analyzing URL...</p>
+    </div>
+    
+    <div id="result" class="result-container"></div>
+  </div>
+  
+  <div class="footer">
+    <a href="#" id="settingsBtn">⚙️ Settings</a> | 
+    <a href="#" id="historyBtn">📊 History</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

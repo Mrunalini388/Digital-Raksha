@@ -1,1 +1,102 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 venv/
+venv_new/
+venv_fresh/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ML Models (keep the ones we need)
+*.pkl
+*.joblib
+!model_url.joblib
+!model_html_tfidf.joblib
+!model_html_clf.joblib
+!feature_order.json
+
+# Cache
+.cache/
+*.cache
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Google Cloud
+.gcloudignore
+app.yaml.bak
+
+# Extension files (for development)
+frontend/icons/
+*.crx
+*.pem
+
+# Data files
+data/
+*.csv
+*.json
+!feature_order.json
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# pytest
+.pytest_cache/
+.coverage
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json

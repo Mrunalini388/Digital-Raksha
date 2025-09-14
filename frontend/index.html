@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>URL Safety Scanner</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { color: #333; }
+    #status { margin-top: 20px; }
+    button { padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>URL Safety Scanner</h1>
+  <p>Extension is running in the background. Use this panel for manual scan:</p>
+  <input type="text" id="url" placeholder="Enter URL to scan">
+  <button id="scanBtn">Scan Now</button>
+  <div id="status"></div>
+
+  <script>
+    const scanBtn = document.getElementById("scanBtn");
+    const status = document.getElementById("status");
+
+    scanBtn.addEventListener("click", async () => {
+      const url = document.getElementById("url").value;
+      if (!url) return alert("Please enter a URL");
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url })
+        });
+        const data = await response.json();
+        status.innerText = data.safe ? "✅ Safe" : "⚠️ Unsafe: " + data.decision;
+
+        const msg = new SpeechSynthesisUtterance(
+          data.safe ? "This site is safe." : "Warning! This site is unsafe."
+        );
+        window.speechSynthesis.speak(msg);
+      } catch (err) {
+        status.innerText = "Server unreachable!";
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
+
+                                                                                                                                        
