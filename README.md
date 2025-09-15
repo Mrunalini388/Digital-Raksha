@@ -38,8 +38,8 @@ A comprehensive browser extension and backend service that provides real-time UR
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/digital-raksha.git
-   cd digital-raksha
+   git clone https://github.com/Mrunalini388/Digital-Raksha
+   cd Digital-Raksha
    ```
 
 2. **Install dependencies**
