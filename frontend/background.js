@@ -1,5 +1,43 @@
-const API_URL = "http://127.0.0.1:5000/scan"; // Keep localhost for local testing
-const BLOCK_UNSAFE = true; // toggle to block unsafe sites automatically
+const DEFAULT_BACKEND = "https://digital-raksha-2.onrender.com/scan";
+
+let SETTINGS = {
+    serverUrl: DEFAULT_BACKEND,
+    autoBlock: true,
+    keepHistory: true
+};
+
+
+// Load settings from sync storage
+async function loadSettings() {
+    try {
+        let result = {};
+        try {
+            result = await chrome.storage.sync.get(['serverUrl', 'autoBlock', 'keepHistory']);
+        } catch {}
+        if (!result || Object.keys(result).length === 0) {
+            try {
+                result = await chrome.storage.local.get(['serverUrl', 'autoBlock', 'keepHistory']);
+            } catch {}
+        }
+        SETTINGS.serverUrl = result.serverUrl || SETTINGS.serverUrl;
+        SETTINGS.autoBlock = result.autoBlock !== false;
+        SETTINGS.keepHistory = result.keepHistory !== false;
+    } catch (e) {
+        // Keep defaults
+    }
+}
+
+// Listen for settings updates from settings page
+chrome.runtime.onMessage.addListener((msg) => {
+    if (msg?.type === 'SETTINGS_UPDATE' && msg.settings) {
+        SETTINGS.serverUrl = msg.settings.serverUrl || SETTINGS.serverUrl;
+        SETTINGS.autoBlock = msg.settings.autoBlock !== false;
+        SETTINGS.keepHistory = msg.settings.keepHistory !== false;
+    }
+});
+
+// Initialize settings on service worker start
+loadSettings();
 
 // Enhanced blocking logic
 function shouldBlockSite(data, threatLevel) {
@@ -7,10 +45,10 @@ function shouldBlockSite(data, threatLevel) {
     if (threatLevel === 'critical') return true;
     
     // Block high threats if auto-block is enabled
-    if (threatLevel === 'high' && BLOCK_UNSAFE) return true;
+    if (threatLevel === 'high' && SETTINGS.autoBlock) return true;
     
     // Block if explicitly marked unsafe
-    if (!data.safe && BLOCK_UNSAFE) return true;
+    if (!data.safe && SETTINGS.autoBlock) return true;
     
     return false;
 }
@@ -149,15 +187,18 @@ function blockSite(tabId, data, threatLevel) {
 // Store scan history
 async function storeScanHistory(data, url) {
     try {
+        if (!SETTINGS.keepHistory) return;
         // Get existing history
         const result = await chrome.storage.local.get(['scanHistory']);
         let history = result.scanHistory || [];
         
         // Create history entry
+        const level = (data.threat_level || (data.safe ? 'safe' : 'high')).toLowerCase();
         const historyEntry = {
             url: url,
             hostname: data.hostname || new URL(url).hostname,
-            threatLevel: data.threat_level || (data.safe ? 'safe' : 'high'),
+            threatLevel: level,
+            threat_level: level,
             riskScore: data.risk_score || data.score || 0,
             confidence: data.confidence || 0,
             threats: data.threats || [],
@@ -189,7 +230,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 
     try {
         // Use fetch with mode 'cors' to avoid CORS issues
-        const res = await fetch(API_URL, {
+        const res = await fetch(SETTINGS.serverUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url }),
@@ -216,7 +257,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
                 type: "ALERT_UNSAFE",
                 data
             });
-        } else if (riskScore > 0) {
+        } else if (data.safe && riskScore > 0) {
             chrome.tabs.sendMessage(details.tabId, {
                 type: "ALERT_INFO",
                 data
@@ -239,6 +280,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
         console.error("Auto-scan error:", err);
     }
 });
+
 
 
 
