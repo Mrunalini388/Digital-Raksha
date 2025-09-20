@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <title>URL Safety Scanner</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7; }
     h1 { color: #333; }
-    #status { margin-top: 20px; }
-    button { padding: 10px 20px; font-size: 16px; }
+    #status { margin-top: 20px; font-weight: bold; }
+    input { padding: 10px; font-size: 16px; width: 300px; margin-right: 10px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    button:hover { background-color: #ddd; }
   </style>
 </head>
 <body>
@@ -18,33 +20,47 @@
   <div id="status"></div>
 
   <script>
+    // Set your deployed backend URL here
+    const API_URL = "https://digital-raksha-2.onrender.com";
+
     const scanBtn = document.getElementById("scanBtn");
     const status = document.getElementById("status");
 
     scanBtn.addEventListener("click", async () => {
-      const url = document.getElementById("url").value;
+      const url = document.getElementById("url").value.trim();
       if (!url) return alert("Please enter a URL");
 
+      status.innerText = "🔄 Scanning...";
+      
       try {
-        const response = await fetch("http://127.0.0.1:5000/scan", {
+        const response = await fetch(`${API_URL}/scan`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url })
         });
-        const data = await response.json();
-        status.innerText = data.safe ? "✅ Safe" : "⚠️ Unsafe: " + data.decision;
 
+        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+        const data = await response.json();
+        const safe = data.safe;
+        const message = data.message || (safe ? "Safe" : "Unsafe");
+
+        // Display status
+        status.innerText = safe ? `✅ Safe: ${message}` : `⚠️ Unsafe: ${message}`;
+
+        // Speak result
         const msg = new SpeechSynthesisUtterance(
-          data.safe ? "This site is safe." : "Warning! This site is unsafe."
+          safe ? "This site is safe." : "Warning! This site is unsafe."
         );
         window.speechSynthesis.speak(msg);
       } catch (err) {
-        status.innerText = "Server unreachable!";
-        console.error(err);
+        status.innerText = "❌ Server unreachable!";
+        console.error("Scan error:", err);
       }
     });
   </script>
 </body>
 </html>
+
 
                                                                                                                                         
