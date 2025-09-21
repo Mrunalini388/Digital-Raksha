@@ -1,7 +1,7 @@
 // Enhanced popup.js with modern UI and detailed analysis
 class DigitalRakshaPopup {
     constructor() {
-        this.API_URL = "http://127.0.0.1:5000/scan";
+        this.API_URL = "https://digital-raksha-2.onrender.com/scan";
         this.init();
     }
 
